@@ -179,3 +179,20 @@ void MpvWidget::setVolume(int volume) {
 void MpvWidget::toggleMute() {
     command({"cycle", "mute"});
 }
+
+void MpvWidget::addSubtitle(const QString &path) {
+    // "select" makes the freshly added track the active one immediately.
+    command({"sub-add", path, "select"});
+}
+
+void MpvWidget::toggleSubtitleVisibility() {
+    command({"cycle", "sub-visibility"});
+}
+
+void MpvWidget::cycleSubtitleTrack() {
+    command({"cycle", "sub"});
+}
+
+void MpvWidget::adjustSubtitleDelay(double deltaSeconds) {
+    command({"add", "sub-delay", QString::number(deltaSeconds)});
+}

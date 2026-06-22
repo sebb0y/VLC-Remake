@@ -2,6 +2,8 @@
 
 #include "MpvWidget.h"
 #include "PlayerControls.h"
+#include "SubtitleDialogs.h"
+#include "SubtitleManager.h"
 
 #include <QApplication>
 #include <QDockWidget>
@@ -31,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     setMinimumSize(720, 480);
     setAcceptDrops(true);
     setWindowIcon(QIcon(":/icons/vela.svg"));
+
+    m_subtitles = new SubtitleManager(this);
 
     buildLayout();
     buildMenus();
@@ -112,6 +116,37 @@ void MainWindow::buildMenus() {
     videoMenu->addAction(tr("Toggle Playlist"), this,
                          [this]() { m_playlistDock->setVisible(!m_playlistDock->isVisible()); });
 
+    QMenu *subMenu = menuBar()->addMenu(tr("&Subtitles"));
+    QAction *dlSubs = subMenu->addAction(tr("&Download Subtitles..."), this,
+                                         &MainWindow::downloadSubtitles);
+    dlSubs->setShortcut(Qt::CTRL | Qt::Key_D);
+    subMenu->addAction(tr("&Add Subtitle File..."), this, &MainWindow::addSubtitleFile);
+    subMenu->addSeparator();
+    addShortcutAction(subMenu, tr("Toggle Subtitles On/Off"), Qt::Key_V,
+                      [this]() { m_player->toggleSubtitleVisibility(); });
+    addShortcutAction(subMenu, tr("Cycle Subtitle Track"), Qt::Key_J,
+                      [this]() { m_player->cycleSubtitleTrack(); });
+    subMenu->addSeparator();
+    addShortcutAction(subMenu, tr("Subtitle Delay  +0.1s (later)"), Qt::SHIFT | Qt::Key_Z,
+                      [this]() {
+                          m_player->adjustSubtitleDelay(0.1);
+                          statusBar()->showMessage(
+                              tr("Subtitle delay: %1 s")
+                                  .arg(m_player->propertyDouble("sub-delay"), 0, 'f', 1),
+                              2000);
+                      });
+    addShortcutAction(subMenu, tr("Subtitle Delay  -0.1s (earlier)"), Qt::Key_Z,
+                      [this]() {
+                          m_player->adjustSubtitleDelay(-0.1);
+                          statusBar()->showMessage(
+                              tr("Subtitle delay: %1 s")
+                                  .arg(m_player->propertyDouble("sub-delay"), 0, 'f', 1),
+                              2000);
+                      });
+    subMenu->addSeparator();
+    subMenu->addAction(tr("OpenSubtitles Account..."), this,
+                       &MainWindow::editSubtitleSettings);
+
     QMenu *helpMenu = menuBar()->addMenu(tr("&Help"));
     helpMenu->addAction(tr("&About Vela"), this, &MainWindow::showAbout);
 
@@ -151,6 +186,71 @@ void MainWindow::wireConnections() {
     connect(m_playlist, &QListWidget::itemActivated, this, [this](QListWidgetItem *) {
         playIndex(m_playlist->currentRow());
     });
+
+    connect(m_subtitles, &SubtitleManager::searchStarted, this, [this]() {
+        statusBar()->showMessage(tr("Searching OpenSubtitles..."));
+    });
+    connect(m_subtitles, &SubtitleManager::failed, this, [this](const QString &message) {
+        statusBar()->clearMessage();
+        QMessageBox::warning(this, tr("Subtitles"), message);
+    });
+    connect(m_subtitles, &SubtitleManager::searchFinished, this,
+            [this](const QList<SubtitleManager::Result> &results) {
+                statusBar()->clearMessage();
+                SubtitleSearchDialog dialog(results, this);
+                if (dialog.exec() == QDialog::Accepted && dialog.selectedIndex() >= 0) {
+                    statusBar()->showMessage(tr("Downloading subtitle..."));
+                    m_subtitles->download(results.at(dialog.selectedIndex()),
+                                          currentVideoPath());
+                }
+            });
+    connect(m_subtitles, &SubtitleManager::downloadFinished, this,
+            [this](const QString &path) {
+                m_player->addSubtitle(path);
+                statusBar()->showMessage(
+                    tr("Subtitles loaded. Use Z / Shift+Z if they need nudging."), 6000);
+            });
+}
+
+QString MainWindow::currentVideoPath() const {
+    if (m_currentIndex < 0 || m_currentIndex >= m_items.size())
+        return {};
+    return m_items.at(m_currentIndex);
+}
+
+void MainWindow::downloadSubtitles() {
+    const QString path = currentVideoPath();
+    if (path.isEmpty() || path.contains("://")) {
+        QMessageBox::information(
+            this, tr("Subtitles"),
+            tr("Play a local video file first, then search for its subtitles."));
+        return;
+    }
+    if (!m_subtitles->isConfigured()) {
+        QMessageBox::information(
+            this, tr("Subtitles"),
+            tr("First add a free OpenSubtitles API key under "
+               "Subtitles → OpenSubtitles Account."));
+        editSubtitleSettings();
+        if (!m_subtitles->isConfigured())
+            return;
+    }
+    m_subtitles->searchForVideo(path);
+}
+
+void MainWindow::addSubtitleFile() {
+    const QString file = QFileDialog::getOpenFileName(
+        this, tr("Add Subtitle File"), QString(),
+        tr("Subtitle files (*.srt *.ass *.ssa *.sub *.vtt);;All files (*)"));
+    if (!file.isEmpty()) {
+        m_player->addSubtitle(file);
+        statusBar()->showMessage(tr("Subtitle added."), 4000);
+    }
+}
+
+void MainWindow::editSubtitleSettings() {
+    SubtitleSettingsDialog dialog(this);
+    dialog.exec();
 }
 
 void MainWindow::openFiles() {

@@ -5,6 +5,7 @@
 
 class MpvWidget;
 class PlayerControls;
+class SubtitleManager;
 class QListWidget;
 class QDockWidget;
 class QAction;
@@ -33,6 +34,9 @@ private slots:
     void playPrevious();
     void toggleFullScreen();
     void showAbout();
+    void downloadSubtitles();
+    void addSubtitleFile();
+    void editSubtitleSettings();
 
 private:
     void buildMenus();
@@ -40,9 +44,11 @@ private:
     void wireConnections();
     void addToPlaylist(const QStringList &paths);
     void playIndex(int index);
+    QString currentVideoPath() const;
 
     MpvWidget *m_player = nullptr;
     PlayerControls *m_controls = nullptr;
+    SubtitleManager *m_subtitles = nullptr;
     QListWidget *m_playlist = nullptr;
     QDockWidget *m_playlistDock = nullptr;
 

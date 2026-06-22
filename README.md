@@ -16,6 +16,8 @@ default video player.
 - Play / pause, stop, seek bar with time readout
 - Volume slider + mute, up to 130% boost
 - Playlist with previous / next and auto-advance at end of file
+- **Automatic subtitle download** from OpenSubtitles, with sync-matched results
+- Manual subtitle file loading, track switching, and on-the-fly delay adjustment
 - Fullscreen toggle
 - Drag & drop files onto the window
 - Open local files or network URLs / streams
@@ -32,6 +34,35 @@ default video player.
 | `→` / `←`      | Seek ±10s         | `Up`/`Down`| Volume ±5         |
 | `Shift+→`/`←`  | Seek ±60s         | `M`        | Mute              |
 | `N` / `P`      | Next / Previous   | `Ctrl+O`   | Open file(s)      |
+| `Ctrl+D`       | Download subtitles| `V`        | Subtitles on/off  |
+| `J`            | Cycle sub track   | `Z`/`Shift+Z`| Subtitle delay ∓ |
+
+## Subtitles
+
+Vela can fetch subtitles automatically from **OpenSubtitles.com**:
+
+1. **Set up once** — open *Subtitles → OpenSubtitles Account…* and paste a free
+   API key (create an account at opensubtitles.com, then **API → Consumers**).
+   Add your username/password too, since downloads require a logged-in account.
+   Set your preferred languages (e.g. `en,es,fr`).
+2. **While a video plays**, press `Ctrl+D` (or *Subtitles → Download
+   Subtitles…*). Vela searches and shows what it found.
+3. **Pick one and download.** The file is saved next to your video and loaded
+   instantly.
+
+### Will they be in sync?
+
+Mostly yes — and that's by design. Vela fingerprints the video with the
+**OpenSubtitles "movie hash"** (computed from the file's size and its first/last
+64 KB) and searches by it first. Results that match the hash were timed to that
+exact release, so they line up without any fiddling — those are marked with a
+**✓** in the *Sync* column. Vela also does a looser filename search to give you
+more language choices; those aren't sync-guaranteed, so if one is slightly off,
+nudge it live with `Z` (earlier) and `Shift+Z` (later) in 0.1 s steps. That's
+the same idea as VLC's subtitle-delay controls.
+
+> Credentials are stored locally via Qt's settings (plain config file). Use a
+> throwaway OpenSubtitles account if that concerns you.
 
 ## Build & install
 
@@ -120,6 +151,8 @@ src/
   MainWindow.*          Window, menus, playlist, shortcuts, drag & drop
   MpvWidget.*           libmpv playback engine embedded in a native window
   PlayerControls.*      Transport bar: play/seek/volume/fullscreen
+  SubtitleManager.*     OpenSubtitles search/download + movie-hash matching
+  SubtitleDialogs.*     Subtitle results picker and account settings dialogs
 resources/
   vela.desktop         Desktop entry with video MIME associations
   resources.qrc        Qt resource bundle (app icon)

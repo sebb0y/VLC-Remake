@@ -14,7 +14,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 
 # libmpv is discovered through pkg-config on Linux/macOS (Homebrew/MSYS2).
 find_package(PkgConfig REQUIRED)
@@ -30,11 +30,15 @@ qt_add_executable(vela
     src/MpvWidget.h
     src/PlayerControls.cpp
     src/PlayerControls.h
+    src/SubtitleManager.cpp
+    src/SubtitleManager.h
+    src/SubtitleDialogs.cpp
+    src/SubtitleDialogs.h
     resources/resources.qrc
 )
 
 target_include_directories(vela PRIVATE src)
-target_link_libraries(vela PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets PkgConfig::MPV)
+target_link_libraries(vela PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network PkgConfig::MPV)
 
 # ---- Installation (lets you set Vela as the system default video player) ----
 include(GNUInstallDirs)

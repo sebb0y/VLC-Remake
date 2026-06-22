@@ -35,6 +35,12 @@ public:
     void setVolume(int volume);
     void toggleMute();
 
+    // Subtitle controls.
+    void addSubtitle(const QString &path);
+    void toggleSubtitleVisibility();
+    void cycleSubtitleTrack();
+    void adjustSubtitleDelay(double deltaSeconds);
+
 signals:
     void positionChanged(double seconds);
     void durationChanged(double seconds);
