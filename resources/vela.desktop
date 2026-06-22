@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Vela Media Player
+GenericName=Media Player
+Comment=Play movies and videos in MP4, MKV, AVI and more
+Icon=vela
+Exec=vela %U
+Terminal=false
+Categories=AudioVideo;Player;Video;
+StartupNotify=true
+MimeType=video/mp4;video/x-matroska;video/x-msvideo;video/quicktime;video/webm;video/mpeg;video/x-flv;video/3gpp;video/ogg;video/x-ms-wmv;video/x-m4v;video/mp2t;video/x-ms-asf;application/x-matroska;
