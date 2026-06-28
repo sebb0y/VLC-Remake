@@ -16,9 +16,27 @@ endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Widgets Network)
 
-# libmpv is discovered through pkg-config on Linux/macOS (Homebrew/MSYS2).
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(MPV REQUIRED IMPORTED_TARGET mpv)
+# Locate libmpv. pkg-config is used only for hints; the real header and
+# library are resolved with find_path/find_library. This avoids a known
+# MSYS2/UCRT64 issue where pkg-config reports MSYS-style paths such as
+# "/ucrt64/include" that break CMake's IMPORTED_TARGET path validation.
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+    pkg_check_modules(PC_MPV QUIET mpv)
+endif()
+
+find_path(MPV_INCLUDE_DIR
+    NAMES mpv/client.h
+    HINTS ${PC_MPV_INCLUDEDIR} ${PC_MPV_INCLUDE_DIRS}
+)
+find_library(MPV_LIBRARY
+    NAMES mpv libmpv mpv-2 libmpv-2 libmpv.dll
+    HINTS ${PC_MPV_LIBDIR} ${PC_MPV_LIBRARY_DIRS}
+)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(MPV
+    REQUIRED_VARS MPV_LIBRARY MPV_INCLUDE_DIR)
 
 qt_standard_project_setup()
 
@@ -37,8 +55,8 @@ qt_add_executable(vela
     resources/resources.qrc
 )
 
-target_include_directories(vela PRIVATE src)
-target_link_libraries(vela PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network PkgConfig::MPV)
+target_include_directories(vela PRIVATE src ${MPV_INCLUDE_DIR})
+target_link_libraries(vela PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::Network ${MPV_LIBRARY})
 
 # ---- Installation (lets you set Vela as the system default video player) ----
 include(GNUInstallDirs)

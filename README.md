@@ -138,13 +138,25 @@ cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
 
-Then set the default via **Settings → Apps → Default apps**, or right-click a
-video → **Open with → Choose another app → vela → Always**.
+This produces `build\vela.exe`. To run it outside the MSYS2 shell (e.g. by
+double-clicking), it needs its runtime DLLs next to it. From the UCRT64 shell:
+
+```bash
+# Qt runtime DLLs + platform plugins
+windeployqt6 build/vela.exe
+# libmpv and its dependencies
+cp /ucrt64/bin/libmpv-2.dll build/
+```
+
+If a launched copy still reports a missing DLL, copy the named file from
+`C:\msys64\ucrt64\bin` next to `vela.exe`. Then set the default via
+**Settings → Apps → Default apps**, or right-click a video →
+**Open with → Choose another app → vela → Always**.
 
 ## Project layout
 
 ```
-CMakeLists.txt          Build definition (Qt6 + libmpv via pkg-config)
+CMakeLists.txt          Build definition (Qt6 + libmpv, cross-platform)
 build.sh                One-shot configure/build/install helper
 src/
   main.cpp              App entry, CLI args, locale setup for mpv
