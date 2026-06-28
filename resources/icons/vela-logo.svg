@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="980" viewBox="0 80 1000 980">
+  <g fill="none" stroke="#ffffff" stroke-width="9"
+     stroke-linejoin="round" stroke-linecap="round">
+
+    <!-- Mainsail + play tip (right of the mast) -->
+    <path d="M 470 250
+             C 600 300 720 380 800 470
+             C 815 487 812 505 788 512
+             L 520 560
+             C 500 540 488 470 480 380
+             C 476 330 472 285 470 250 Z"/>
+
+    <!-- Jib / foresail (left of the mast) -->
+    <path d="M 452 268
+             C 420 360 380 470 352 560
+             C 348 572 356 582 369 580
+             L 498 556
+             C 470 540 458 420 452 268 Z"/>
+
+    <!-- Hull / wave sweeping to the right -->
+    <path d="M 355 588
+             C 470 628 690 612 805 540
+             C 720 590 560 612 470 600
+             C 430 595 392 592 355 588 Z"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="500" y="940" text-anchor="middle"
+        font-family="'Trebuchet MS','DejaVu Sans',sans-serif"
+        font-size="220" font-weight="600"
+        fill="none" stroke="#ffffff" stroke-width="5">Vela</text>
+</svg>

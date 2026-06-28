@@ -13,10 +13,13 @@
 #include <QFileInfo>
 #include <QInputDialog>
 #include <QKeyEvent>
+#include <QLabel>
 #include <QListWidget>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QPixmap>
+#include <QStackedWidget>
 #include <QStatusBar>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -54,7 +57,17 @@ void MainWindow::buildLayout() {
     m_player = new MpvWidget(central);
     m_controls = new PlayerControls(central);
 
-    layout->addWidget(m_player, 1);
+    // A branded welcome screen sits in front of the video surface until the
+    // first file is played. The logo is white line-art, so it shows cleanly
+    // on the dark background; we swap to the actual video once playback starts.
+    m_welcome = buildWelcomePage(central);
+
+    m_stack = new QStackedWidget(central);
+    m_stack->addWidget(m_welcome);
+    m_stack->addWidget(m_player);
+    m_stack->setCurrentWidget(m_welcome);
+
+    layout->addWidget(m_stack, 1);
     layout->addWidget(m_controls, 0);
     setCentralWidget(central);
 
@@ -63,6 +76,32 @@ void MainWindow::buildLayout() {
     m_playlistDock->setWidget(m_playlist);
     m_playlistDock->setObjectName("playlistDock");
     addDockWidget(Qt::RightDockWidgetArea, m_playlistDock);
+}
+
+QWidget *MainWindow::buildWelcomePage(QWidget *parent) {
+    auto *page = new QWidget(parent);
+    page->setAutoFillBackground(true);
+    QPalette pal = page->palette();
+    pal.setColor(QPalette::Window, QColor("#1c1c22"));
+    page->setPalette(pal);
+
+    auto *logo = new QLabel(page);
+    logo->setAlignment(Qt::AlignCenter);
+    logo->setPixmap(QPixmap(":/icons/vela-logo.png"));
+    logo->setScaledContents(false);
+
+    auto *hint = new QLabel(
+        tr("Open a video (Ctrl+O) or drag a file here to start"), page);
+    hint->setAlignment(Qt::AlignCenter);
+    hint->setStyleSheet("color: #8a8a92; font-size: 15px;");
+
+    auto *layout = new QVBoxLayout(page);
+    layout->addStretch(2);
+    layout->addWidget(logo, 0, Qt::AlignCenter);
+    layout->addSpacing(16);
+    layout->addWidget(hint, 0, Qt::AlignCenter);
+    layout->addStretch(3);
+    return page;
 }
 
 void MainWindow::buildMenus() {
@@ -292,6 +331,7 @@ void MainWindow::playIndex(int index) {
         return;
     m_currentIndex = index;
     m_playlist->setCurrentRow(index);
+    m_stack->setCurrentWidget(m_player); // leave the welcome screen
     m_player->loadFile(m_items.at(index));
     statusBar()->showMessage(tr("Playing: %1").arg(m_items.at(index)), 4000);
 }

@@ -167,11 +167,20 @@ src/
   SubtitleDialogs.*     Subtitle results picker and account settings dialogs
 resources/
   vela.desktop         Desktop entry with video MIME associations
-  resources.qrc        Qt resource bundle (app icon)
-  icons/vela.svg       Application icon
+  resources.qrc        Qt resource bundle (app icon + welcome logo)
+  icons/vela.svg       Application / taskbar icon
+  icons/vela-logo.png  Welcome-screen logo (shown before playback starts)
 packaging/
   set-default.sh       Registers Vela as the default video handler (Linux)
 ```
+
+## Branding / replacing the logo
+
+The white "Vela" logo shown on the idle welcome screen lives at
+`resources/icons/vela-logo.png`. To use your own artwork, just overwrite that
+file (a transparent-background PNG, light-coloured so it reads on the dark
+screen) and rebuild — no code changes needed. The `icons/vela-logo.svg` source
+is included if you'd rather tweak the vector and re-export.
 
 ## How it works
 

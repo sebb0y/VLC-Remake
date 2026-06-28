@@ -8,6 +8,7 @@ class PlayerControls;
 class SubtitleManager;
 class QListWidget;
 class QDockWidget;
+class QStackedWidget;
 class QAction;
 
 // MainWindow ties together the video surface, the transport controls, the
@@ -41,6 +42,7 @@ private slots:
 private:
     void buildMenus();
     void buildLayout();
+    QWidget *buildWelcomePage(QWidget *parent);
     void wireConnections();
     void addToPlaylist(const QStringList &paths);
     void playIndex(int index);
@@ -51,6 +53,8 @@ private:
     SubtitleManager *m_subtitles = nullptr;
     QListWidget *m_playlist = nullptr;
     QDockWidget *m_playlistDock = nullptr;
+    QStackedWidget *m_stack = nullptr;
+    QWidget *m_welcome = nullptr;
 
     QStringList m_items;
     int m_currentIndex = -1;
