@@ -48,6 +48,11 @@ private:
     void playIndex(int index);
     QString currentVideoPath() const;
 
+    // Auto-hiding control bar.
+    void showControlsBar();
+    void hideControlsBar();
+    void onIdleTick();
+
     MpvWidget *m_player = nullptr;
     PlayerControls *m_controls = nullptr;
     SubtitleManager *m_subtitles = nullptr;
@@ -55,8 +60,13 @@ private:
     QDockWidget *m_playlistDock = nullptr;
     QStackedWidget *m_stack = nullptr;
     QWidget *m_welcome = nullptr;
+    QTimer *m_idleTimer = nullptr;
 
     QStringList m_items;
     int m_currentIndex = -1;
     bool m_wasMaximized = false;
+    bool m_playbackStarted = false;
+    bool m_paused = false;
+    QPoint m_lastCursorPos;
+    int m_idleMs = 0;
 };

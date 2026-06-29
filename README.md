@@ -19,6 +19,8 @@ default video player.
 - **Automatic subtitle download** from OpenSubtitles, with sync-matched results
 - Manual subtitle file loading, track switching, and on-the-fly delay adjustment
 - Fullscreen toggle
+- Auto-hiding control bar — it slides away during playback and reappears the
+  moment you move the mouse (and stays put while paused)
 - Drag & drop files onto the window
 - Open local files or network URLs / streams
 - Command-line file arguments, so the OS can launch it to open a video

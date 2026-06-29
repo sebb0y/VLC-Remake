@@ -34,6 +34,8 @@ MpvWidget::MpvWidget(QWidget *parent) : QWidget(parent) {
     mpv_set_option_string(m_mpv, "hwdec", "auto-safe");
     mpv_set_option_string(m_mpv, "vo", "gpu");
     mpv_set_option_string(m_mpv, "ytdl", "yes");
+    // Hide the mouse cursor over the video after a second of inactivity.
+    mpv_set_option_string(m_mpv, "cursor-autohide", "1000");
 
     if (mpv_initialize(m_mpv) < 0)
         throw std::runtime_error("Could not initialise the mpv player engine.");

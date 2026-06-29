@@ -6,6 +6,7 @@
 #include "SubtitleManager.h"
 
 #include <QApplication>
+#include <QCursor>
 #include <QDockWidget>
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -21,6 +22,7 @@
 #include <QPixmap>
 #include <QStackedWidget>
 #include <QStatusBar>
+#include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
 #include <QWidget>
@@ -46,6 +48,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
     // Apply the initial volume the slider starts at.
     m_player->setVolume(100);
     statusBar()->showMessage(tr("Open a video to begin — drag & drop works too."));
+
+    // Drives the auto-hiding control bar. Polling the global cursor position
+    // works even though the video is rendered in a native child window that
+    // would otherwise swallow Qt mouse events.
+    m_idleTimer = new QTimer(this);
+    m_idleTimer->setInterval(250);
+    connect(m_idleTimer, &QTimer::timeout, this, &MainWindow::onIdleTick);
+    m_lastCursorPos = QCursor::pos();
 }
 
 void MainWindow::buildLayout() {
@@ -214,8 +224,12 @@ void MainWindow::wireConnections() {
     connect(m_player, &MpvWidget::durationChanged, m_controls, &PlayerControls::setDuration);
     connect(m_player, &MpvWidget::volumeChanged, m_controls, &PlayerControls::setVolume);
     connect(m_player, &MpvWidget::muteChanged, m_controls, &PlayerControls::setMuted);
-    connect(m_player, &MpvWidget::pauseChanged, this,
-            [this](bool paused) { m_controls->setPlaying(!paused); });
+    connect(m_player, &MpvWidget::pauseChanged, this, [this](bool paused) {
+        m_controls->setPlaying(!paused);
+        m_paused = paused;
+        if (paused) // reveal the controls whenever playback is paused
+            showControlsBar();
+    });
     connect(m_player, &MpvWidget::endFile, this, &MainWindow::playNext);
     connect(m_player, &MpvWidget::mediaTitleChanged, this, [this](const QString &title) {
         if (!title.isEmpty())
@@ -334,6 +348,12 @@ void MainWindow::playIndex(int index) {
     m_stack->setCurrentWidget(m_player); // leave the welcome screen
     m_player->loadFile(m_items.at(index));
     statusBar()->showMessage(tr("Playing: %1").arg(m_items.at(index)), 4000);
+
+    // Begin auto-hiding the control bar now that something is playing.
+    m_playbackStarted = true;
+    showControlsBar();
+    if (!m_idleTimer->isActive())
+        m_idleTimer->start();
 }
 
 void MainWindow::playNext() {
@@ -351,14 +371,57 @@ void MainWindow::toggleFullScreen() {
         showNormal();
         if (m_wasMaximized)
             showMaximized();
-        menuBar()->show();
+        showControlsBar();
         statusBar()->show();
     } else {
         m_wasMaximized = isMaximized();
-        menuBar()->hide();
         statusBar()->hide();
         showFullScreen();
     }
+    m_idleMs = 0;
+}
+
+void MainWindow::showControlsBar() {
+    if (!m_controls->isVisible())
+        m_controls->show();
+    if (menuBar()->isHidden())
+        menuBar()->show();
+    m_idleMs = 0;
+}
+
+void MainWindow::hideControlsBar() {
+    m_controls->hide();
+    if (isFullScreen())
+        menuBar()->hide(); // keep the menu bar in windowed mode
+}
+
+void MainWindow::onIdleTick() {
+    const QPoint pos = QCursor::pos();
+    const bool moved = (pos - m_lastCursorPos).manhattanLength() > 2;
+    m_lastCursorPos = pos;
+
+    if (moved) {
+        showControlsBar();
+        return;
+    }
+
+    // Never hide while idle on the welcome screen or while paused — only
+    // during active playback.
+    if (!m_playbackStarted || m_paused)
+        return;
+
+    // Keep the bar up while the cursor hovers over it.
+    if (m_controls->isVisible()) {
+        const QRect bar(m_controls->mapToGlobal(QPoint(0, 0)), m_controls->size());
+        if (bar.contains(pos)) {
+            m_idleMs = 0;
+            return;
+        }
+    }
+
+    m_idleMs += m_idleTimer->interval();
+    if (m_idleMs >= 2200)
+        hideControlsBar();
 }
 
 void MainWindow::showAbout() {
